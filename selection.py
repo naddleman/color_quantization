@@ -2,11 +2,17 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 from PIL import Image
 
 # Constants
-filename = "kodim23.png"
-K = 6
+args = sys.argv
+if len(args) != 3:
+    sys.exit("Usage: python selection.py <filename> <K>")
+
+filename = args[1]
+K = int(args[2])
+out_file = f"{filename[:-4]}_{K}_clusters.png"
 
 im = Image.open(filename)
 im = im.convert('HSV')
@@ -21,7 +27,7 @@ def kmeans(vec, k):
     means = np.random.randint(0,256,k)
     convergence = [128]*k
     while sum(convergence) > 10:
-        print(sum(convergence))
+        print(f"means: {means}")
         d_to_mean = color_ds[vec][:,means]
         assignments = np.argmin(color_ds[vec][:,means], axis=1)
         for i in range(k):
@@ -29,7 +35,6 @@ def kmeans(vec, k):
             v_mean = v.mean()
             convergence[i] = abs(means[i] - v_mean)
             means[i] = v_mean
-        print(convergence)
     out = np.empty(hvec.shape)
     for i in range(k):
         out[assignments == i] = means[i]
@@ -47,4 +52,7 @@ boosted_V = boost(np.array(val))
 s_out = Image.fromarray(boosted_S).convert('L')
 v_out = Image.fromarray(boosted_V).convert('L')
 out_img = Image.merge('HSV', [hue_quantized, s_out, v_out])
+out_img = out_img.convert('RGB')
+print(f"saving {out_file}")
+out_img.save(out_file, 'PNG')
 
